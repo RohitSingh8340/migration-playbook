@@ -1,0 +1,72 @@
+---
+- name: Migrate VMs from VMware to OpenShift Virtualization
+  hosts: localhost
+  gather_facts: no
+  vars:
+    vmware_host: 'https://vcenter.ibmcoe.techmapps.local'
+    vmware_user: 'administrator@vsphere.local'
+    vmware_password: 'Ibmcoe@12345'
+    open_shift_api_url: 'https://console-openshift-console.apps.ibmcoe.techmapps.local'
+    open_shift_token: 'oc login --token=sha256~XTttG4O8rQ9V5hTl-lgJEPUNjpwWpvndCbGa1faNM9U --server=https://api.ibmcoe.techmapps.local:6443'
+    vms_to_migrate:
+      - application01
+
+  tasks:
+    - name: Connect to VMware
+      community.vmware.vmware_vm_info:
+        hostname: "{{ vmware_host }}"
+        username: "{{ vmware_user }}"
+        password: "{{ vmware_password }}"
+        validate_certs: no
+      register: vmware_info
+
+    - name: Gather VM details
+      community.vmware.vmware_vm_info:
+        hostname: "{{ vmware_host }}"
+        username: "{{ vmware_user }}"
+        password: "{{ vmware_password }}"
+        validate_certs: no
+        filter:
+          name: "{{ item }}"
+      loop: "{{ vms_to_migrate }}"
+      register: vms
+
+    - name: Print VM details
+      debug:
+        msg: "{{ item }}"
+      loop: "{{ vms.results }}"
+
+    - name: Migrate VM to OpenShift
+      community.kubernetes.k8s:
+        kubeconfig: /path/to/your/kubeconfig
+        state: present
+        definition:
+          apiVersion: kubevirt.io/v1alpha1
+          kind: VirtualMachine
+          metadata:
+            name: "{{ item.item.name }}"
+          spec:
+            running: true
+            template:
+              spec:
+                domain:
+                  devices:
+                    disks:
+                      - name: rootdisk
+                        disk:
+                          bus: virtio
+                  resources:
+                    requests:
+                      memory: 4Gi
+                volumes:
+                  - name: rootdisk
+                    persistentVolumeClaim:
+                      claimName: "{{ item.item.name }}-pvc"
+      loop: "{{ vms.results }}"
+      register: migrated_vms
+
+    - name: Print migration status
+      debug:
+        msg: "{{ item }}"
+      loop: "{{ migrated_vms.results }}"
+
