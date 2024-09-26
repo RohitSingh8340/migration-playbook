@@ -1,0 +1,13 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: ocp-virt
+  namespace: ocp-virt
+spec:
+  to:
+    kind: Service
+    name: ocp-virt
+    weight: 100
+  port:
+    targetPort: 80
+  wildcardPolicy: None

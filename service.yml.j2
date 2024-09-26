@@ -1,0 +1,13 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: ocp-virt
+  namespace: ocp-virt
+spec:
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP
+  selector:
+    kubevirt.io/domain: ocp-virt
