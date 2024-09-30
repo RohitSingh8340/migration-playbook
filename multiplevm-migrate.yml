@@ -13,9 +13,7 @@
     target_provider: "ocp-virt"  # Target OpenShift Virtualization provider in MTV
     networkmap_name: "networkmap-001"
     storagemap_name: "storagemap-001"
-
   tasks:
-
     - name: Authenticate with OpenShift (bypassing self-signed cert)
       shell: |
         oc login --server={{ ocp_url }} --token={{ ocp_token }} --insecure-skip-tls-verify=true
